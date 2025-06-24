@@ -1,0 +1,10 @@
+# Ignore environment config
+.env
+
+# Node.js stuff
+node_modules/
+npm-debug.log
+dependencies.md
+
+# VSCode (if you use it)
+.vscode/

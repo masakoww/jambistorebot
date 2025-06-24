@@ -1,0 +1,21 @@
+{
+  "name": "jambi-store-bot",
+  "version": "1.2.2",
+  "description": "A Discord bot for shop and with its utilites only for JAMBISTORE.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "discord.js"
+  ],
+  "author": "st4ndalone",
+  "license": "MD",
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5"
+  }
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "test",
+    "name": "TEST",
+    "price": 15000,
+    "stock": 5,
+    "description": "EWEWEWEWEWE",
+    "imageUrl": "https://cdn.discordapp.com/avatars/796610317957988413/6913416cb7a81dce3b3c95478ab923e3.webp?size=4096",
+    "channelId": "1341481342256414751",
+    "messageId": "1387054589920153611"
+  }
+]

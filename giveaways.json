@@ -1,0 +1,36 @@
+{
+  "1387003237420367883": {
+    "messageId": "1387003237420367883",
+    "channelId": "1346252293762449490",
+    "guildId": "1341390224466382918",
+    "startTime": 1750757740977,
+    "endTime": 1750758040080,
+    "prize": "LONTE",
+    "winnerCount": 1,
+    "participants": [
+      "796610317957988413"
+    ],
+    "status": "ended",
+    "requiredWinnerId": "796610317957988413",
+    "winners": [
+      "796610317957988413"
+    ]
+  },
+  "1387004972071391333": {
+    "messageId": "1387004972071391333",
+    "channelId": "1346252293762449490",
+    "guildId": "1341390224466382918",
+    "startTime": 1750758154596,
+    "endTime": 1750758213368,
+    "prize": "crot",
+    "winnerCount": 1,
+    "participants": [
+      "796610317957988413"
+    ],
+    "status": "ended",
+    "requiredWinnerId": null,
+    "winners": [
+      "796610317957988413"
+    ]
+  }
+}
