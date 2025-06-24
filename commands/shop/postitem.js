@@ -18,11 +18,11 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         const productsPath = path.join(__dirname, '../../products.json');
-        let products = fs.existsSync(productsPath) ? JSON.parse(fs.readFileSync(productsPath, 'utf8')) : [];
+        const products = interaction.client.products;
 
         const newItemId = interaction.options.getString('name').toLowerCase().replace(/\s+/g, '-');
         if (products.some(p => p.id === newItemId)) {
-            return interaction.editReply({ content: 'Error: A product with this name already exists. Please choose a unique name.' });
+            return interaction.editReply({ content: 'Error: A product with this name already exists.' });
         }
 
         const channel = interaction.options.getChannel('channel');
@@ -34,7 +34,9 @@ module.exports = {
             description: interaction.options.getString('description'),
             imageUrl: interaction.options.getString('image_url'),
             channelId: channel.id,
-            messageId: null // Will be updated after posting
+            messageId: null,
+            totalSold: 0,
+            ratings: [] // NEW: Initialize ratings array
         };
 
         const embed = new EmbedBuilder()
@@ -43,31 +45,27 @@ module.exports = {
             .setDescription(newItemData.description)
             .addFields(
                 { name: 'Harga', value: `Rp ${newItemData.price.toLocaleString('id-ID')}`, inline: true },
-                { name: 'Stok', value: `${newItemData.stock}`, inline: true }
+                { name: 'Stok', value: `${newItemData.stock}`, inline: true },
+                { name: 'Terjual', value: `${newItemData.totalSold}`, inline: true },
+                { name: 'Rating', value: 'No reviews yet', inline: false } // NEW
             )
             .setImage(newItemData.imageUrl)
             .setFooter({ text: 'Klik tombol beli untuk membeli item ini' });
             
-        const purchaseButton = new ButtonBuilder()
-            .setCustomId(`purchase_initiate_${newItemData.id}`)
-            .setLabel('Beli Sekarang')
-            .setStyle(ButtonStyle.Success)
-            .setEmoji('🛒');
-
+        const purchaseButton = new ButtonBuilder().setCustomId(`purchase_initiate_${newItemData.id}`).setLabel('Beli Sekarang').setStyle(ButtonStyle.Success).setEmoji('🛒');
         const row = new ActionRowBuilder().addComponents(purchaseButton);
 
         try {
             const message = await channel.send({ embeds: [embed], components: [row] });
-            newItemData.messageId = message.id; // Save the message ID
+            newItemData.messageId = message.id;
 
             products.push(newItemData);
-            interaction.client.products.push(newItemData); // Update live state
             fs.writeFileSync(productsPath, JSON.stringify(products, null, 2));
 
             await interaction.editReply({ content: `✅ Successfully posted and saved the product "${newItemData.name}".` });
         } catch (error) {
             console.error('Failed to post item:', error);
-            await interaction.editReply({ content: 'An error occurred while trying to post the item. Please check my permissions.' });
+            await interaction.editReply({ content: 'An error occurred while trying to post the item.' });
         }
     },
 };

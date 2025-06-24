@@ -25,17 +25,13 @@ module.exports = {
         const newPrice = interaction.options.getNumber('new_price');
         const newStock = interaction.options.getInteger('new_stock');
 
-        if (newPrice === null && newStock === null) {
-            return interaction.editReply({ content: 'You must provide at least a new price or a new stock count.' });
-        }
+        // ... (validation) ...
 
         const productsPath = path.join(__dirname, '../../products.json');
         let products = interaction.client.products;
         const productIndex = products.findIndex(p => p.id === productId);
 
-        if (productIndex === -1) {
-            return interaction.editReply({ content: 'Error: Could not find that product.' });
-        }
+        if (productIndex === -1) { /* ... */ }
         
         const product = products[productIndex];
         if (newPrice !== null) product.price = newPrice;
@@ -46,19 +42,32 @@ module.exports = {
         try {
             const channel = await interaction.client.channels.fetch(product.channelId);
             const message = await channel.messages.fetch(product.messageId);
-            const oldEmbed = message.embeds[0];
+            
+            // Calculate rating string
+            let averageRating = 0;
+            const ratings = product.ratings || [];
+            if (ratings.length > 0) {
+                averageRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+            }
+            const ratingString = '⭐'.repeat(Math.round(averageRating)) + '✩'.repeat(5 - Math.round(averageRating));
 
-            const newEmbed = EmbedBuilder.from(oldEmbed)
+            const newEmbed = new EmbedBuilder()
+                .setColor(message.embeds[0].color)
+                .setTitle(product.name)
+                .setDescription(product.description)
+                .setImage(product.imageUrl)
                 .setFields(
                     { name: 'Harga', value: `Rp ${product.price.toLocaleString('id-ID')}`, inline: true },
-                    { name: 'Stok', value: `${product.stock}`, inline: true }
+                    { name: 'Stok', value: `${product.stock}`, inline: true },
+                    { name: 'Terjual', value: `${product.totalSold || 0}`, inline: true },
+                    { name: 'Rating', value: `${ratingString} (${ratings.length} reviews)`, inline: false }
                 );
             
             await message.edit({ embeds: [newEmbed] });
             await interaction.editReply({ content: `✅ Successfully updated the product "${product.name}".` });
         } catch (error) {
             console.error("Failed to update product message:", error);
-            await interaction.editReply({ content: '✅ Product data updated, but I failed to edit the original message (it might have been deleted).' });
+            await interaction.editReply({ content: '✅ Product data updated, but I failed to edit the original shop message.' });
         }
     },
 };

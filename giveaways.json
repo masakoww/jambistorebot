@@ -32,5 +32,18 @@
     "winners": [
       "796610317957988413"
     ]
+  },
+  "1387113291909959690": {
+    "messageId": "1387113291909959690",
+    "channelId": "945228472907870218",
+    "guildId": "889346655835529217",
+    "startTime": 1750783979557,
+    "endTime": 1750783988467,
+    "prize": "w",
+    "winnerCount": 1,
+    "participants": [],
+    "status": "ended",
+    "requiredWinnerId": null,
+    "winners": []
   }
 }

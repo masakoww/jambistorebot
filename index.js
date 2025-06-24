@@ -12,11 +12,28 @@ require('dotenv').config();
 // =================================================================
 
 const PREFIX = '!';
-const AFFILIATE_DISCOUNT_RATE = 0.05;
+const AFFILIATE_DISCOUNT_RATE = 0.05; // 5%
 
-const securityConfig = { logChannelId: process.env.LOG_CHANNEL_ID, authorizedUsers: process.env.AUTHORIZED_USERS ? process.env.AUTHORIZED_USERS.split(',') : [], phishingDomains: [], dangerousExtensions: ['.exe', '.bat', '.cmd', '.scr', '.vbs', '.js', '.jar'], spamThreshold: 5, spamTimeWindow: 5000, warningLimit: 3, timeoutDuration: 3600000 };
-const feedbackConfig = { testimonialChannelId: process.env.TESTIMONIAL_CHANNEL_ID, feedbackLogChannelId: process.env.FEEDBACK_LOG_CHANNEL_ID };
-const commissionTiers = { 0: 0.02, 100: 0.05, 500: 0.07, 1000: 0.10 };
+const securityConfig = {
+    logChannelId: process.env.LOG_CHANNEL_ID,
+    authorizedUsers: process.env.AUTHORIZED_USERS ? process.env.AUTHORIZED_USERS.split(',') : [],
+    phishingDomains: [],
+    dangerousExtensions: ['.exe', '.bat', '.cmd', '.scr', '.vbs', '.js', '.jar'],
+    spamThreshold: 5,
+    spamTimeWindow: 5000,
+    warningLimit: 3,
+    timeoutDuration: 3600000,
+};
+const feedbackConfig = {
+    testimonialChannelId: process.env.TESTIMONIAL_CHANNEL_ID,
+    feedbackLogChannelId: process.env.FEEDBACK_LOG_CHANNEL_ID,
+};
+const commissionTiers = {
+    0: 0.02, 100: 0.05, 500: 0.07, 1000: 0.10,
+};
+const orderLogConfig = {
+    channelId: process.env.ORDER_LOG_CHANNEL_ID
+};
 
 const warnings = new Map();
 const violationHistory = new Map();
@@ -34,7 +51,13 @@ const purchaseState = new Map();
 // =================================================================
 
 const client = new Client({
-    intents: [ GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration ],
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildModeration
+    ],
     partials: [Partials.Channel],
 });
 
@@ -50,12 +73,12 @@ client.affiliates = affiliates;
 client.giveaways = giveaways;
 client.products = products;
 client.purchaseState = purchaseState;
+client.orderLogConfig = orderLogConfig;
 
 // =================================================================
 // SECTION 3: COMMAND AND EVENT HANDLER REGISTRATION
 // =================================================================
 
-// --- Load Slash Commands (Corrected Logic) ---
 const commandsPath = path.join(__dirname, 'commands');
 function findAndLoadCommands(directory) {
     const items = fs.readdirSync(directory);
@@ -63,9 +86,10 @@ function findAndLoadCommands(directory) {
         const itemPath = path.join(directory, item);
         const stat = fs.statSync(itemPath);
         if (stat.isDirectory()) {
-            findAndLoadCommands(itemPath); // Recurse into all subdirectories
-        } else if (item.endsWith('.js') && directory !== path.join(__dirname, 'commands', 'payment')) {
-            // Load file if it's a .js file AND not in the payment directory
+            if (path.basename(itemPath) !== 'payment') {
+                findAndLoadCommands(itemPath);
+            }
+        } else if (item.endsWith('.js')) {
             const command = require(itemPath);
             if ('data' in command && 'execute' in command) {
                 command.filePath = itemPath;
@@ -76,8 +100,6 @@ function findAndLoadCommands(directory) {
 }
 findAndLoadCommands(commandsPath);
 
-
-// --- Load Prefix Commands ---
 const paymentCommandsPath = path.join(__dirname, 'commands', 'payment');
 if (fs.existsSync(paymentCommandsPath)) {
     const paymentCommandFiles = fs.readdirSync(paymentCommandsPath).filter(file => file.endsWith('.js'));
@@ -98,6 +120,7 @@ client.on(Events.MessageCreate, onMessageCreate);
 function onReady(readyClient) {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     readyClient.user.setActivity('$server', { type: ActivityType.Watching });
+
     loadStateFromFile(warnings, 'warnings.json');
     loadStateFromFile(violationHistory, 'violation_history.json');
     loadPhishingDomains();
@@ -112,6 +135,7 @@ async function onInteractionCreate(interaction) {
     if (interaction.isChatInputCommand()) await handleSlashCommand(interaction);
     else if (interaction.isButton()) await handleButton(interaction);
     else if (interaction.isModalSubmit()) await handleModal(interaction);
+    else if (interaction.isStringSelectMenu()) await handleSelectMenu(interaction);
     else if (interaction.isAutocomplete()) await handleAutocomplete(interaction);
 }
 
@@ -133,7 +157,6 @@ async function onMessageCreate(message) {
 async function handleSlashCommand(interaction) {
     const command = interaction.client.commands.get(interaction.commandName);
     if (!command) return;
-
     const isAdminCommand = command.isAdmin || command.isSecurityCommand;
     if (isAdminCommand) {
         const member = interaction.member;
@@ -144,16 +167,11 @@ async function handleSlashCommand(interaction) {
             return interaction.reply({ content: 'You do not have the required permissions for this command.', ephemeral: true });
         }
     }
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
+    try { await command.execute(interaction); }
+    catch (error) {
         console.error(`Error executing ${interaction.commandName}:`, error);
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: 'An error occurred while executing this command!', ephemeral: true });
-        } else {
-            await interaction.reply({ content: 'An error occurred while executing this command!', ephemeral: true });
-        }
+        if (interaction.replied || interaction.deferred) { await interaction.followUp({ content: 'An error occurred!', ephemeral: true }); }
+        else { await interaction.reply({ content: 'An error occurred!', ephemeral: true }); }
     }
 }
 
@@ -165,6 +183,7 @@ async function handleButton(interaction) {
         else if (customId === 'purchase_confirm_ticket') await handlePurchaseConfirmation(interaction);
         else if (customId === 'purchase_redeem_code') await handleRedeemButton(interaction);
         else if (customId === 'purchase_cancel') await interaction.update({ content: 'Purchase cancelled.', components: [], embeds: [] });
+        else if (customId === 'ticket_ready') await handleTicketReadyButton(interaction);
         else if (customId.startsWith('feedback_leave_review')) await handleFeedbackLeaveReviewClick(interaction);
         else if (customId.startsWith('feedback_no_thanks')) await interaction.update({ content: 'Thank you for your time.', components: [] });
     } catch (error) { console.error(`Error handling button ${customId}:`, error); }
@@ -188,9 +207,8 @@ async function handleSelectMenu(interaction) {
 async function handleAutocomplete(interaction) {
     const command = interaction.client.commands.get(interaction.commandName);
     if (!command || !command.autocomplete) return;
-    try {
-        await command.autocomplete(interaction);
-    } catch (error) { console.error('Autocomplete error:', error); }
+    try { await command.autocomplete(interaction); }
+    catch (error) { console.error('Autocomplete error:', error); }
 }
 
 async function handlePrefixCommand(message) {
@@ -203,12 +221,8 @@ async function handlePrefixCommand(message) {
     const isAdmin = member.permissions.has(PermissionsBitField.Flags.Administrator);
     const hasBotAdminRole = member.roles.cache.some(role => role.name === 'Bot Admin');
     if (!isRootUser && !isAdmin && !hasBotAdminRole) return;
-    try {
-        command.execute(message, args);
-    } catch (error) {
-        console.error(`Error executing prefix command ${commandName}:`, error);
-        message.reply('There was an error executing that command!');
-    }
+    try { command.execute(message, args); }
+    catch (error) { console.error(`Error executing prefix command ${commandName}:`, error); message.reply('An error occurred!'); }
 }
 
 // =================================================================
@@ -287,21 +301,49 @@ async function handlePurchaseFormSubmit(interaction) {
 
 async function sendTicketWelcomeMessage(channel, user, orderData) {
     const supportRole = channel.guild.roles.cache.find(r => r.name === 'SELLER');
-    const embed = new EmbedBuilder()
-        .setColor('#3498DB')
-        .setTitle('🛒 Final Order Summary')
-        .setAuthor({ name: user.username, iconURL: user.displayAvatarURL() })
-        .addFields(
-            { name: '📦 Product', value: `\`${orderData.productName}\``, inline: true },
-            { name: '🔢 Quantity', value: `\`${orderData.quantity}\``, inline: true },
-            { name: '💰 Final Price', value: `**Rp ${orderData.finalPrice.toLocaleString('id-ID')}**`, inline: true }
-        );
-    if(orderData.affiliateCode) {
-        embed.addFields({ name: '🤝 Affiliate Code Used', value: `\`${orderData.affiliateCode}\` (-Rp ${orderData.discount.toLocaleString('id-ID')})`});
-    }
-    embed.setFooter({ text: 'An admin will be with you shortly to provide payment details.' });
+    const product = products.find(p => p.id === orderData.productId);
     
-    await channel.send({ content: `${user} ${supportRole || ''}`, embeds: [embed] });
+    const embed = new EmbedBuilder()
+        .setColor('#FFA500')
+        .setTitle(`Pembelian: ${orderData.productName}`)
+        .setThumbnail(product?.imageUrl || null)
+        .addFields(
+            { name: 'Harga', value: `Rp ${orderData.finalPrice.toLocaleString('id-ID')}`, inline: true },
+            { name: 'Stok Tersisa', value: `${product?.stock || 'N/A'}`, inline: true },
+            { name: 'Status', value: 'Menunggu Staff', inline: true },
+            { name: 'Pembeli', value: `${user}`, inline: false},
+            { name: 'Waktu', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: false },
+            { name: 'Deskripsi Item', value: product?.description || 'No description available.', inline: false }
+        );
+
+    const readyButton = new ButtonBuilder()
+        .setCustomId('ticket_ready')
+        .setLabel('Ready')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('✅');
+    
+    const row = new ActionRowBuilder().addComponents(readyButton);
+    
+    await channel.send({ content: `${user} ${supportRole || ''}`, embeds: [embed], components: [row] });
+}
+
+async function handleTicketReadyButton(interaction) {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+        return interaction.reply({ content: 'Only staff can use this button.', ephemeral: true });
+    }
+
+    const originalMessage = interaction.message;
+    const oldEmbed = originalMessage.embeds[0];
+
+    const newEmbed = EmbedBuilder.from(oldEmbed)
+        .setColor('#2ECC71')
+        .spliceFields(2, 1, { name: 'Status', value: 'Siap Diproses', inline: true });
+
+    const readyButton = ButtonBuilder.from(originalMessage.components[0].components[0]).setDisabled(true);
+    const newRow = new ActionRowBuilder().addComponents(readyButton);
+
+    await originalMessage.edit({ embeds: [newEmbed], components: [newRow] });
+    await interaction.reply({ content: 'Ticket status updated. You can now use `/kirim` or `!pay` commands.', ephemeral: true });
 }
 
 async function createTicketChannel(guild, user) {
@@ -387,25 +429,103 @@ async function endGiveaway(messageId, giveaway) {
 
 // --- Feedback System ---
 async function handleFeedbackLeaveReviewClick(interaction) {
-    const modal = new ModalBuilder().setCustomId('feedback_review_modal').setTitle('Leave Your Feedback');
+    const productId = interaction.customId.split('_')[3];
+    if (!productId) {
+        return interaction.reply({ content: 'Could not identify the product for this review.', ephemeral: true });
+    }
+
+    const modal = new ModalBuilder()
+        .setCustomId(`feedback_review_modal_${productId}`)
+        .setTitle('Leave Your Product Feedback');
+        
     const ratingInput = new TextInputBuilder().setCustomId('rating').setLabel("Rating (1-5)").setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(1);
-    const reviewInput = new TextInputBuilder().setCustomId('review').setLabel("Review Comments").setStyle(TextInputStyle.Paragraph).setRequired(false);
+    const reviewInput = new TextInputBuilder().setCustomId('review').setLabel("Review Comments (Optional)").setStyle(TextInputStyle.Paragraph).setRequired(false);
+    
     modal.addComponents(new ActionRowBuilder().addComponents(ratingInput), new ActionRowBuilder().addComponents(reviewInput));
     await interaction.showModal(modal);
 }
 
 async function handleFeedbackModalSubmit(interaction) {
     await interaction.deferUpdate();
-    const rating = interaction.fields.getTextInputValue('rating');
-    const review = interaction.fields.getTextInputValue('review') || 'No comments.';
-    if (isNaN(rating) || Number(rating) < 1 || Number(rating) > 5) return interaction.followUp({ content: 'Invalid rating. Please enter 1-5.', ephemeral: true });
+    const productId = interaction.customId.split('_')[3];
+    const productIndex = products.findIndex(p => p.id === productId);
+
+    if (productIndex === -1) {
+        return interaction.editReply({ content: 'This product seems to no longer exist.', components: [] });
+    }
+
+    const rating = parseInt(interaction.fields.getTextInputValue('rating'), 10);
+    const review = interaction.fields.getTextInputValue('review') || 'No comments provided.';
+
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+        return interaction.followUp({ content: 'Invalid rating. Please enter a number between 1 and 5.', ephemeral: true });
+    }
+
+    const product = products[productIndex];
+    if (!product.ratings) {
+        product.ratings = [];
+    }
+    
+    const existingRatingIndex = product.ratings.findIndex(r => r.userId === interaction.user.id);
+    if (existingRatingIndex !== -1) {
+        product.ratings[existingRatingIndex] = { userId: interaction.user.id, username: interaction.user.username, rating, review, timestamp: new Date().toISOString() };
+    } else {
+        product.ratings.push({ userId: interaction.user.id, username: interaction.user.username, rating, review, timestamp: new Date().toISOString() });
+    }
+    
+    const productsPath = path.join(__dirname, 'products.json');
+    fs.writeFileSync(productsPath, JSON.stringify(products, null, 2));
+
+    await updateShopMessage(interaction.client, product);
+
     const logChannel = interaction.client.channels.cache.get(feedbackConfig.feedbackLogChannelId);
     if (logChannel) {
-        const stars = '⭐'.repeat(Number(rating)) + '✩'.repeat(5 - Number(rating));
-        const embed = new EmbedBuilder().setColor('#FFD700').setTitle('New Customer Feedback').setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() }).addFields({ name: 'Rating', value: stars }, { name: 'Review', value: `\`\`\`${review}\`\`\`` });
-        await logChannel.send({ embeds: [embed] });
+        const stars = '⭐'.repeat(rating) + '✩'.repeat(5 - rating);
+        const feedbackEmbed = new EmbedBuilder()
+            .setColor('#FFD700')
+            .setTitle('New Customer Feedback')
+            .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+            .addFields(
+                { name: 'Product', value: product.name },
+                { name: 'Rating', value: stars },
+                { name: 'Review', value: `\`\`\`${review}\`\`\`` }
+            )
+            .setTimestamp();
+        await logChannel.send({ embeds: [feedbackEmbed] });
     }
-    await interaction.editReply({ content: 'Thank you for your feedback!', components: [] });
+
+    await interaction.editReply({ content: 'Thank you for your valuable feedback!', components: [] });
+}
+
+async function updateShopMessage(client, product) {
+    try {
+        const channel = await client.channels.fetch(product.channelId);
+        const message = await channel.messages.fetch(product.messageId);
+        
+        let averageRating = 0;
+        const ratings = product.ratings || [];
+        if (ratings.length > 0) {
+            averageRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+        }
+        const ratingString = '⭐'.repeat(Math.round(averageRating)) + '✩'.repeat(5 - Math.round(averageRating));
+
+        const newEmbed = new EmbedBuilder()
+            .setColor(message.embeds[0].color)
+            .setTitle(product.name)
+            .setDescription(product.description)
+            .setImage(product.imageUrl)
+            .setFields(
+                { name: 'Harga', value: `Rp ${product.price.toLocaleString('id-ID')}`, inline: true },
+                { name: 'Stok', value: `${product.stock}`, inline: true },
+                { name: 'Terjual', value: `${product.totalSold || 0}`, inline: true },
+                { name: 'Rating', value: `${ratingString} (${ratings.length} reviews)`, inline: false }
+            )
+            .setFooter({ text: 'Klik tombol beli untuk membeli item ini' });
+            
+        await message.edit({ embeds: [newEmbed] });
+    } catch (error) {
+        console.error(`Could not update shop message for ${product.id}:`, error);
+    }
 }
 
 // =================================================================
