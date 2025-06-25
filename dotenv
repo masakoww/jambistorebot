@@ -1,23 +1,24 @@
-# Get this from the Discord Developer Portal under your bot's settings
+# Discord Bot Credentials
 DISCORD_TOKEN=
-
-# Get this from the Discord Developer Portal under "General Information"
 CLIENT_ID=
-
-# This is the ID of your server (guild).
 GUILD_ID=
 
-# --- SECURITY MODULE CONFIG ---
-
-# The channel ID where security logs will be sent.
+# Channel IDs
 LOG_CHANNEL_ID=
-
-# A comma-separated list of user IDs who are authorized to use security commands.
-# Example: AUTHORIZED_USERS=123456789,987654321
-AUTHORIZED_USERS=
-
-# --- NEW: TESTIMONIAL & FEEDBACK CONFIG ---
-# The public channel where formatted testimonials are posted.
 TESTIMONIAL_CHANNEL_ID=
-# The private channel where raw customer feedback is logged.
 FEEDBACK_LOG_CHANNEL_ID=
+ORDER_LOG_CHANNEL_ID=
+TRANSCRIPT_LOG_CHANNEL_ID=
+REVIEW_LOG_CHANNEL_ID=
+
+#STOCK MANAGEMENTS
+LOW_STOCK_ALERT_CHANNEL_ID=
+LOW_STOCK_THRESHOLD=
+TICKET_CATEGORY_ID=
+SUPPORT_CATEGORY_ID=
+
+# Bot Administration
+AUTHORIZED_USERS=796610317957988413,1043090988731732078,800782804282507277
+BOT_VERSION=3.0.0
+TRUSTED_BUYER_ROLE_ID=
+TRUSTED_BUYER_THRESHOLD=5

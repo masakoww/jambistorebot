@@ -9,10 +9,12 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
         .addSubcommand(subcommand =>
             subcommand.setName('start').setDescription('Starts a new giveaway.')
+                // --- REQUIRED OPTIONS (MUST COME FIRST) ---
                 .addStringOption(option => option.setName('duration').setDescription('How long the giveaway should last (e.g., 10m, 1h, 2d)').setRequired(true))
                 .addIntegerOption(option => option.setName('winners').setDescription('How many winners to draw').setRequired(true))
                 .addStringOption(option => option.setName('prize').setDescription('What the prize is').setRequired(true))
-                .addChannelOption(option => option.setName('channel').setDescription('Channel to post the giveaway in').addChannelTypes(ChannelType.GuildText).setRequired(false))
+                // --- OPTIONAL OPTIONS (MUST COME AFTER REQUIRED) ---
+                .addChannelOption(option => option.setName('channel').setDescription('Channel to post the giveaway in (defaults to current)').addChannelTypes(ChannelType.GuildText).setRequired(false))
                 .addUserOption(option => option.setName('required_winner').setDescription('[Secret] Pre-selects a user to win if they enter.').setRequired(false))
         )
         .addSubcommand(subcommand => subcommand.setName('reroll').setDescription('Re-rolls a winner for an ended giveaway.').addStringOption(option => option.setName('message_id').setDescription('The message ID of the giveaway to re-roll').setRequired(true)))

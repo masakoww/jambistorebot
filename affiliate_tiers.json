@@ -1,0 +1,14 @@
+[
+  {
+    "name": "GOLD",
+    "percentage": 2
+  },
+  {
+    "name": "BASIC",
+    "percentage": 1
+  },
+  {
+    "name": "STREAMER",
+    "percentage": 20
+  }
+]

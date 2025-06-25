@@ -5,25 +5,19 @@ module.exports = {
         .setName('myaffiliate')
         .setDescription('Check your current affiliate stats and earnings.'),
     async execute(interaction) {
-        const { affiliates, orders, commissions } = interaction.client;
+        const { affiliates, orders, affiliateTiers } = interaction.client;
         const userId = interaction.user.id;
 
         const affiliateData = affiliates.get(userId);
         if (!affiliateData) {
-            return interaction.reply({ content: 'You are not registered as an affiliate. Use `/daftar-affiliate` to register.', ephemeral: true });
+            return interaction.reply({ content: 'You are not registered as an affiliate.', ephemeral: true });
         }
 
+        const tier = affiliateTiers.find(t => t.name === affiliateData.tier);
+        const commissionRate = tier ? tier.percentage / 100 : 0;
+        
         const referralCount = affiliateData.referrals?.length || 0;
         const referrals = affiliateData.referrals || [];
-
-        let commissionRate = 0;
-        const tiers = Object.keys(commissions.tiers).sort((a, b) => b - a);
-        for (const tier of tiers) {
-            if (referralCount >= tier) {
-                commissionRate = commissions.tiers[tier];
-                break;
-            }
-        }
         
         let totalReferredValue = 0;
         for (const orderId of referrals) {
@@ -32,7 +26,6 @@ module.exports = {
                 totalReferredValue += order.finalPrice;
             }
         }
-
         const totalEarnings = totalReferredValue * commissionRate;
 
         const embed = new EmbedBuilder()
@@ -41,7 +34,7 @@ module.exports = {
             .addFields(
                 { name: 'Your Affiliate Code', value: `\`${affiliateData.code}\``, inline: false },
                 { name: 'Total Referrals', value: `**${referralCount}**`, inline: true },
-                { name: 'Current Commission Tier', value: `**${commissionRate * 100}%**`, inline: true },
+                { name: 'Your Tier', value: `**${affiliateData.tier || 'None'}** (${commissionRate * 100}%)`, inline: true },
                 { name: 'Total Revenue Generated', value: `\`Rp ${totalReferredValue.toLocaleString('id-ID')}\``, inline: false },
                 { name: 'Estimated Earnings', value: `\`Rp ${totalEarnings.toLocaleString('id-ID')}\``, inline: false }
             )

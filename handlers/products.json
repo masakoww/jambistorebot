@@ -1,0 +1,114 @@
+[
+  {
+    "id": "testing",
+    "title": "TESTING",
+    "variants": [
+      {
+        "name": "SATU",
+        "price": 1000,
+        "stock": 1
+      },
+      {
+        "name": "DUA",
+        "price": 2000,
+        "stock": 100
+      },
+      {
+        "name": "TIGA",
+        "price": 3000,
+        "stock": 10
+      },
+      {
+        "name": "EWE",
+        "price": 6000,
+        "stock": 20
+      }
+    ],
+    "description": "It’s the perfect time to level up your Discord server! 🚀 For a limited time, score epic discounts on Dyno Premium, now through next week. 🛒  Take your community to the next level and save while you're at it. No rush—just don’t miss out! 🎮 🎁  Wishing you happy holidays from all of us at Dyno! ❤️ ✨ Stay awesome!",
+    "imageUrl": "https://media.discordapp.net/attachments/667560445975986190/1116412148642500720/HC-Grid-EN.png?ex=685cd496&is=685b8316&hm=9afb814c5df8914acb42c2f4a50cfcd957dca4a161ac607fa79188c8bd5b3c92&=&format=webp&quality=lossless&width=1196&height=557",
+    "channelId": "945223332989653042",
+    "messageId": "1387424770970353836",
+    "totalSold": 1,
+    "ratings": [],
+    "stock": -1
+  },
+  {
+    "id": "test-kedua",
+    "title": "TEST KEDUA",
+    "variants": [
+      {
+        "name": "TES",
+        "price": 1000,
+        "stock": 0
+      },
+      {
+        "name": "SATU",
+        "price": 5000,
+        "stock": 19999
+      },
+      {
+        "name": "DUA",
+        "price": 40,
+        "stock": 12008
+      }
+    ],
+    "description": "hat these apps can (and can’t) do How to set up our new “Use External Apps” permission, available now How we leveled up AutoMod to keep your server safe  Wanna spend some time tinkering? Follow our guide to building your own app!  Stay awesome, The Discord Team",
+    "imageUrl": "https://media.discordapp.net/attachments/667560445975986190/1116412148642500720/HC-Grid-EN.png?ex=685cd496&is=685b8316&hm=9afb814c5df8914acb42c2f4a50cfcd957dca4a161ac607fa79188c8bd5b3c92&=&format=webp&quality=lossless&width=1196&height=557",
+    "channelId": "945223332989653042",
+    "messageId": "1387428721824235631",
+    "totalSold": 494,
+    "ratings": [
+      {
+        "userId": "796610317957988413",
+        "username": "st4ndalone",
+        "rating": 5,
+        "review": "GG.",
+        "timestamp": "2025-06-25T14:52:09.665Z"
+      }
+    ]
+  },
+  {
+    "id": "welcome",
+    "title": "WELCOME",
+    "variants": [
+      {
+        "name": "AAA",
+        "price": 10000,
+        "stock": 10
+      },
+      {
+        "name": "BBB",
+        "price": 25000,
+        "stock": 2
+      },
+      {
+        "name": "CCC",
+        "price": 12550,
+        "stock": 4
+      }
+    ],
+    "features": [
+      "ABC",
+      "DEF",
+      "GHI",
+      "JKL",
+      "LMN",
+      "OPQ"
+    ],
+    "notes": "THIS IS NEW FEATURE!",
+    "description": "TRY OUT MY FEATURE",
+    "imageUrl": "https://media.discordapp.net/attachments/1385654126624641095/1387413956166942740/assets2Ftask_01jyketqrdfxevhdb7rpztn5nq2F1750852610_img_0.png?ex=685d4170&is=685beff0&hm=31eb225e3240c9bc8cfc38446a4aec2246f076865adc87ae2fd57bf377229cc9&=&format=webp&quality=lossless&width=674&height=674",
+    "channelId": "1387538495597449488",
+    "messageId": "1387538961748066314",
+    "totalSold": 1,
+    "ratings": [
+      {
+        "userId": "796610317957988413",
+        "username": "st4ndalone",
+        "rating": 5,
+        "review": "GG.",
+        "timestamp": "2025-06-25T21:13:48.430Z"
+      }
+    ]
+  }
+]
